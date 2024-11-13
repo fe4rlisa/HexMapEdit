@@ -22,3 +22,9 @@ Use "F" to load a json file
 Download the HexMapEdit.py file and run it with python in your terminal!
 
 The json file starts with a settings object that is used to set values when importing, and a tiles object that stores the x and y cords and the value of the tile.
+
+
+<h1>Reference</h1>
+https://www.redblobgames.com/grids/hexagons/#basics
+
+This site has a ton of useful info on hexagons and how to implement them in your games!
