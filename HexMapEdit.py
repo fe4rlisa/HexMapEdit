@@ -310,7 +310,7 @@ while running:
     draw_grid(grid)
 
     if show_start_message:
-        draw_message("S to save and F to load file")
+        draw_message("Press space to open the menu")
         if time.time() - message_time > 4:
             show_start_message = False
     if message:
