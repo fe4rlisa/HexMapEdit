@@ -4,6 +4,8 @@ A simple tool made in pygame to edit simple hexagonal grids. Feel free to use th
 
 
 
+![IMG_1124](https://github.com/user-attachments/assets/13edd42b-c44c-4f61-8631-b4bee6cef5f7)
+
 <h1>Create simple map layouts</h1>
 
 Click on a tile to change its color/value. Click a tile multiple times to cycle througb colors/values
