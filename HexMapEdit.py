@@ -63,7 +63,6 @@ def create_grid(grid_width, grid_height):
 #-----------------------------------------------------#
 
 
-
 def draw_grid(grid):
     grid_pixel_width = (grid_width) *  (hex_width) - (hex_width / 2)        #/ Calculates the size of \#
     grid_pixel_height = (grid_height) * (hex_height) - (hex_width)          #\      the hex grid      /#
