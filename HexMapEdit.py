@@ -241,17 +241,19 @@ def save_to_file():
             print("Error saving file:", e)    
 
 def import_file():
+    global radius, grid_width, grid_height, hex_width, hex_height
     file_path = easygui.fileopenbox()
     if file_path:
         try:
             with open(file_path, "r") as f:
                 data = json.load(f)
                 settings = data.get("settings", {})
-                global radius, grid_width, grid_height
                 radius = settings.get("radius", radius)
                 grid_width = settings.get("grid_width", grid_width)
                 grid_height = settings.get("grid_height", grid_height)
                 grid.clear()
+                hex_width = np.sqrt(3) * radius
+                hex_height = 3 / 2 * radius
                 for tile in data["tiles"]:
                     x = tile["x"]
                     y = tile["y"]
