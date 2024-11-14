@@ -26,12 +26,12 @@ screen_width, screen_height = 800,600
 screen_center = (screen_width/2, screen_height/2)
 
 
-radius = 34
+radius = 36
 hex_width = np.sqrt(3) * radius
 hex_height = 3 / 2 * radius
-grid_width = 10
-grid_height = 10
-grid = []
+grid_width = 8
+grid_height = 8
+grid = {}
 
 color_mapping= {
     0: BLUE2,
@@ -59,7 +59,7 @@ def create_grid(grid_width, grid_height):
     grid.clear()
     for y in range(grid_height):
         for x in range(grid_width):
-            grid.append({(x,y): 0})
+            grid[(x,y)] = {"type": 0}
     return grid
 #-----------------------------------------------------#
 
@@ -88,23 +88,23 @@ def draw_grid(grid):
 
 
             #-- Draw hexagons and then hexagon outlines --#
-            grid_index = y * grid_width + x
+            grid_index = (x, y)
+
+            if grid_index not in grid:
+                continue
+
             hex_dict = grid[grid_index]
-            for key in hex_dict:
-                color = color_mapping[hex_dict[key]]
-                pygame.draw.polygon(screen, color, hexagon_vertices)
+            color = color_mapping[hex_dict["type"]]
+            pygame.draw.polygon(screen, color, hexagon_vertices)
                
             hexagon_outline = pygame.draw.polygon(screen, BLACK, hexagon_vertices, width=4)
             #---------------------------------------------#
-
-
 # Get real cords to check if user has clicked on a hexagon
 def check_for_hex_fill(grid, mouse_pos):
     grid_pixel_width = grid_width * hex_width - (hex_width / 2)
     grid_pixel_height = grid_height * hex_height - hex_height
     start_x = screen_center[0] - grid_pixel_width / 2
-    start_y = screen_center[1] - grid_pixel_height / 2
-    
+    start_y = screen_center[1] - grid_pixel_height / 2  
 
     for y in range(grid_height):
         for x in range(grid_width):
@@ -118,59 +118,87 @@ def check_for_hex_fill(grid, mouse_pos):
             distance = np.sqrt(distance_x ** 2 + distance_y ** 2)
 
             if distance <= radius:
-                grid_index = y * grid_width + x
+                grid_index = (x, y)
                 hex_dict = grid[grid_index]
                 for key in hex_dict:
                     hex_dict[key] = (hex_dict[key] + 1) %len(color_mapping)
                 break
 
+
+
 def draw_menu():
     screen.blit(menu_surface, (0,0))
     menu_surface.fill((0,0,0,128))
 
-    settings = ["radius", "grid_width", "grid_height"]
+    settings = {"radius": "Radius",
+     "grid_width": "Grid Width",
+     "grid_height": "Grid Height",
+    }
     spacing = menu_height // (len(settings) + 1)
     y_position = spacing
 
-    for setting in settings:
-        label_surface = menu_font.render(f"{setting}: ", True, text_col)
-        input_surface = menu_font.render(input_text[setting], True, text_col)
-
-        label_rect = label_surface.get_rect(center=(menu_width / 4, y_position))
-        input_rect = pygame.Rect(menu_width / 2, y_position - 15, 30, 30)
-
-        pygame.draw.rect(menu_surface, GRAY if input_active[setting] else BLUE3, input_rect)
+    for var_name, display in settings.items():
+        current_value = globals()[var_name]
+        label_surface = menu_font.render(f"{display}: {current_value}", True, text_col)
+        label_rect = label_surface.get_rect(center=( menu_width * 2 / 4, y_position))
         menu_surface.blit(label_surface, label_rect)
-        menu_surface.blit(input_surface, input_rect.topleft)
+
+        minus_rect = pygame.Rect(label_rect.left - 50, y_position - 10, 20, 20)
+        pygame.draw.rect(menu_surface, GRAY, minus_rect)
+        minus_text = menu_font.render(" -",True, BLACK)
+        menu_surface.blit(minus_text, minus_rect.topleft)
+
+        plus_rect = pygame.Rect(label_rect.right + 30, y_position - 10, 20, 20)
+        pygame.draw.rect(menu_surface, GRAY, plus_rect)
+        plus_text = menu_font.render(" +", True, BLACK)
+        menu_surface.blit(plus_text, plus_rect.topleft)
+
+        input_active[var_name + "_minus"] = minus_rect
+        input_active[var_name + "_plus"] = plus_rect
+
         y_position += spacing
 
 def handle_menu_events(event):
-    global radius, grid_width, grid_height
+    global radius, grid_width, grid_height, hex_width, hex_height, grid
 
-    if event.type == pygame.MOUSEBUTTONDOWN:
-        y_position = menu_height / 4
-        for setting in input_active:
-            input_rect = pygame.Rect(menu_width / 2, y_position - 15, 100, 30)
-            if input_rect.collidepoint(event.pos):
-                for key in input_active:
-                    input_active[key] = False
-                input_active[setting] = True
-            y_position += menu_height / 4
+    temp_grid = {k: v for k, v in grid.items()}
 
-    elif event.type == pygame.KEYDOWN:
-        for setting, active in input_active.items():
-            if active:
-                if event.key == pygame.K_RETURN:
-                    if setting == "radius":
-                        radius = int(input_text[setting])
-                    elif setting == "grid_width":
-                        grid_width = int(input_text[setting])
-                    elif setting == "grid_height":
-                        grid_height = int(input_text[setting])
-                elif event.key == pygame.K_BACKSPACE:
-                    input_text[setting] = input_text[setting][:-1]
-                else:
-                    input_text[setting] += event.unicode
+    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+        mouse_pos = pygame.mouse.get_pos()
+        for setting in ["radius", "grid_width", "grid_height"]:
+            if input_active[setting + "_minus"].collidepoint(mouse_pos):
+                if setting == "radius":
+                    radius -= 2
+                    input_text[setting] = str(radius)
+                elif setting == "grid_width":
+                    grid_width -= 1
+                    input_text[setting] = str(grid_width)
+                elif setting == "grid_height":
+                    grid_height -= 1
+                    input_text[setting] = str(grid_width)
+                create_grid(grid_width, grid_height)
+
+            elif input_active[setting + "_plus"].collidepoint(mouse_pos):
+                if setting == "radius":
+                    radius += 2
+                    input_text[setting] = str(radius)
+                elif setting == "grid_width":
+                    grid_width += 1
+                    input_text[setting] = str(grid_width)
+                elif setting == "grid_height":
+                    grid_height += 1
+                    input_text[setting] = str(grid_width)
+
+        hex_width = np.sqrt(3) * radius
+        hex_height = 3 / 2 * radius
+
+        new_grid = create_grid(grid_width, grid_height)
+        for (x,y), value in temp_grid.items():
+            if x < grid_width and y < grid_height:
+                new_grid[(x,y)] = value
+
+        grid = new_grid
+        
 
 def show_message():
     global message, message_time
@@ -196,13 +224,12 @@ def grid_to_json(grid):
         },
         "tiles": []
     }
-    for hex_dict in grid:
-        for (x,y), value in hex_dict.items():
-            json_data["tiles"].append({
-                "x": x,
-                "y": y,
-                "value": value,
-            })
+    for (x, y), hex_dict in grid.items():
+        json_data["tiles"].append({
+            "x": x,
+            "y": y,
+            "value": hex_dict["type"],
+        })
     return json_data
 
 def save_to_file():
@@ -231,7 +258,7 @@ def import_file():
                     x = tile["x"]
                     y = tile["y"]
                     value = tile["value"]
-                    grid.append({(x,y): value})
+                    grid[(x,y)] = {"type": value}
                 return data
         except Exception as e:
             print("Error loading file", e)
@@ -255,26 +282,28 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        elif show_menu:
-            handle_menu_events(event)
+        
 
         elif event.type == pygame.KEYDOWN:
 
             #-- Key binds go here --#
             if event.key == pygame.K_ESCAPE:
                 running = False
-            #elif event.key == pygame.K_SPACE:
-            #    show_menu = not show_menu
+            elif event.key == pygame.K_SPACE:
+                show_menu = not show_menu
             elif event.key == pygame.K_s:
                 save_to_file()
             elif event.key == pygame.K_f:
                 print("importing file...")
-                import_file()
-
+                import_file()        
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_pos = pygame.mouse.get_pos()
-            check_for_hex_fill(grid, mouse_pos)
+            if not show_menu:
+                check_for_hex_fill(grid, mouse_pos)
+            else:
+                handle_menu_events(event)
+        
         
     # fill the screen with a color to wipe away anything from last frame
     screen.fill(BLUE1)
