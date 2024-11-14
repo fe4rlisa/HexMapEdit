@@ -5,7 +5,6 @@ import pygame
 import easygui
 import numpy as np
 
-
 BLACK = (23, 14, 25)
 BLUE1 = (47, 33, 59)
 BLUE2 = (67, 58, 96)
